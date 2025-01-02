@@ -1,4 +1,4 @@
-from benchmark import performance_decorator, print_performance_results, print_profiling_results
+from Benchmark import performance_decorator, print_performance_results, print_profiling_results
 
 @performance_decorator
 def say_hello():
