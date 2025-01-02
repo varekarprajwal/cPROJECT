@@ -3,7 +3,7 @@ __pycache__/
 /venv
 .credentials/
 /logs
-Benchmark/benchmark_results.txt
+Benchmark/*.txt
 execution.txt
 Benchmark/logs/
 

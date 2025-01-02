@@ -1,5 +1,2 @@
-from Benchmark.benchmark import performance_decorator
-from Benchmark.benchmark import print_performance_results
-from Benchmark.benchmark import print_profiling_results
-from Benchmark.benchmark import save_benchmark_results
 from Benchmark.logger import get_logger
+from Benchmark.benchmark import performance_decorator, print_performance_results, print_profiling_results, save_results, show_results

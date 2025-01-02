@@ -1,6 +1,5 @@
-# main.py
-
-from Benchmark import performance_decorator, print_performance_results, print_profiling_results, save_benchmark_results
+import time
+from Benchmark import performance_decorator, print_performance_results, print_profiling_results, save_results, show_results
 from Benchmark import get_logger
 
 # Get logger
@@ -19,9 +18,12 @@ def add_numbers(a, b):
     return result
 
 if __name__ == "__main__":
-    # Run functions (decorators will collect performance and profiling data automatically)
+    # Run functions
     say_hello()
-    add_numbers(10, 20)
-    
-    # Save the results to a text file
-    save_benchmark_results()
+    add_numbers(10,12)
+
+    # Save results to a file
+    save_results()
+
+    # Show results in GUI (Streamlit)
+    show_results()
