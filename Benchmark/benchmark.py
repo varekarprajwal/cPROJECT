@@ -1,9 +1,12 @@
+# Benchmark/benchmark.py
+
 import time
 import tracemalloc
 import cProfile
 import pstats
 from tabulate import tabulate
 from io import StringIO
+import os
 
 # List to store performance data
 performance_results = []
@@ -68,3 +71,28 @@ def print_profiling_results():
     for result in profiling_results:
         print(f"\nFunction: {result['Function']}")
         print(result['Profiling Data'])
+
+def save_benchmark_results(performance_results=performance_results, profiling_results=profiling_results, log_dir="Benchmark"):
+    """
+    Saves the performance and profiling results to a text file.
+    
+    :param performance_results: The performance results to be written to the file
+    :param profiling_results: The profiling results to be written to the file
+    :param log_dir: The directory to save the results file
+    """
+    # Ensure the directory exists
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Prepare the content for the file
+    performance_content = "=== Performance Results ===\n"
+    performance_content += tabulate(performance_results, headers="keys", tablefmt="grid") + "\n\n"
+
+    profiling_content = "=== Profiling Results ===\n"
+    for result in profiling_results:
+        profiling_content += f"Function: {result['Function']}\n{result['Profiling Data']}\n"
+
+    # Write results to a text file
+    with open(os.path.join(log_dir, "benchmark_results.txt"), "w") as f:
+        f.write(performance_content)
+        f.write(profiling_content)

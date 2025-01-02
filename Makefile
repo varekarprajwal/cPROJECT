@@ -2,6 +2,8 @@
 PYTHON = python3
 VENV_DIR = venv
 REQUIREMENTS = requirements.txt
+EXECUTION = execution.txt
+BENCHMARK_DIR = Benchmark
 SCRIPT = main.py
 
 # Default target to create and activate the virtual environment, install dependencies, and run the program
@@ -17,7 +19,7 @@ install: $(VENV_DIR)
 
 # Run the Python program with detailed time and memory stats
 run: $(VENV_DIR)
-	/usr/bin/time -v $(VENV_DIR)/bin/python $(SCRIPT)
+	/usr/bin/time -v $(VENV_DIR)/bin/python $(SCRIPT) 2> $(EXECUTION)
 
 # Setup the virtual environment and install dependencies
 setup: $(VENV_DIR)
@@ -26,6 +28,10 @@ setup: $(VENV_DIR)
 # Clean up the virtual environment
 clean:
 	rm -rf $(VENV_DIR)
+
+# Clear the log file
+clear_logs:
+	rm -f $(BENCHMARK_DIR)/logs/app.log
 
 # To create a requirements file (e.g., if you want to track your Python dependencies)
 freeze:
@@ -39,3 +45,4 @@ help:
 	@echo "  make run     - Run the Python script with time and memory statistics"
 	@echo "  make clean   - Remove the virtual environment"
 	@echo "  make freeze  - Generate a requirements.txt from the virtual environment"
+	@echo "  make clear_logs - Clear the log file (project_log.log)"

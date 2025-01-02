@@ -2,3 +2,10 @@ __pycache__/
 *.egg-info/
 /venv
 .credentials/
+/logs
+Benchmark/benchmark_results.txt
+execution.txt
+Benchmark/logs/
+
+
+
