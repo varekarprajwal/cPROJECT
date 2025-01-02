@@ -1,154 +1,81 @@
-import time
-import tracemalloc
 import cProfile
+from line_profiler import LineProfiler
+import functools
+from memory_profiler import memory_usage, profile
+import io
 import pstats
-from io import StringIO
-import asyncio
-import psutil
-import gc
-import json
-from tabulate import tabulate
-import streamlit as st
+from contextlib import redirect_stdout
 
-# List to store performance data and profiling results
-performance_results = []
-profiling_results = []
+# Wrapper function for profiling
+def profile_function(profiler_type='none', output_file='Benchmark/profile_results.txt'):
+    """
+    A wrapper function to profile a function using cProfile, line_profiler, or memory_profiler.
+    :param profiler_type: 'cProfile', 'line_profiler', 'memory_profiler', or 'none' (for no profiling)
+    :param output_file: The file where profiling results will be stored
+    :return: a wrapped function with profiling enabled or no profiling
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            result = None  # Ensure 'result' is always defined
+            
+            # Open the output file in write mode (this will clear previous content)
+            with open(output_file, 'w') as f:  # 'w' mode clears the previous file contents
+                if profiler_type == 'cProfile':
+                    f.write(f"\nProfiling function '{func.__name__}' with cProfile...\n")
+                    
+                    # Create a profiler object
+                    profiler = cProfile.Profile()
+                    profiler.enable()
 
-def get_cpu_usage():
-    return psutil.cpu_percent(interval=1)
+                    # Call the function
+                    result = func(*args, **kwargs)
+                    
+                    # Disable profiler and capture the stats
+                    profiler.disable()
+                    
+                    # Redirect the profiler stats to a string buffer
+                    stream = io.StringIO()
+                    stats = pstats.Stats(profiler, stream=stream)
+                    stats.strip_dirs()
+                    stats.sort_stats('cumulative')
+                    stats.print_stats()
 
-def performance_decorator(func):
-    async def async_wrapper(*args, **kwargs):
-        # Start tracking memory
-        tracemalloc.start()
+                    # Write the stats to the output file
+                    f.write(stream.getvalue())
 
-        # Record start time
-        start_time = time.time()
+                elif profiler_type == 'line_profiler':
+                    f.write(f"\nProfiling function '{func.__name__}' with line_profiler...\n")
+                    profiler = LineProfiler()
+                    profiler.add_function(func)
+                    profiler.enable_by_count()
+                    result = func(*args, **kwargs)
+                    profiler.disable_by_count()
+                    profiler.print_stats(stream=f)
 
-        # Profile the function execution
-        pr = cProfile.Profile()
-        pr.enable()
+                elif profiler_type == 'memory_profiler':
+                    f.write(f"\nProfiling memory usage for function '{func.__name__}'...\n")
+                    
+                    # Capture memory profiler output using StringIO
+                    mem_output = io.StringIO()
+                    with redirect_stdout(mem_output):
+                        # Use memory_profiler to track memory usage at a line-by-line level
+                        @profile
+                        def wrapped_func():
+                            return func(*args, **kwargs)
+                        
+                        # Run the function and capture memory profile output
+                        wrapped_func()
 
-        cpu_before = get_cpu_usage()
+                    # Write the memory profiler output to the file
+                    f.write(mem_output.getvalue())
+                    
+                else:
+                    # No profiling, just run the function normally
+                    f.write(f"\nRunning function '{func.__name__}' without profiling...\n")
+                    result = func(*args, **kwargs)
+                    
+            return result  # Return the result of the function
 
-        # Execute the original function
-        result = await func(*args, **kwargs)
-
-        # Stop profiling
-        pr.disable()
-        end_time = time.time()
-
-        cpu_after = get_cpu_usage()
-
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-
-        performance_data = {
-            "Function": func.__name__,
-            "Time Taken (seconds)": f"{end_time - start_time:.6f}",
-            "Current Memory (MB)": f"{current / 10**6:.6f}",
-            "Peak Memory (MB)": f"{peak / 10**6:.6f}",
-            "CPU Usage Before (%)": cpu_before,
-            "CPU Usage After (%)": cpu_after
-        }
-        performance_results.append(performance_data)
-
-        # Collect profiling data
-        prof_data = StringIO()
-        stats = pstats.Stats(pr, stream=prof_data)
-        stats.strip_dirs().sort_stats('time').print_stats()
-        profiling_data = {
-            "Function": func.__name__,
-            "Profiling Data": prof_data.getvalue()
-        }
-        profiling_results.append(profiling_data)
-
-        return result
-
-    def sync_wrapper(*args, **kwargs):
-        # Same implementation as async but for sync functions
-        tracemalloc.start()
-        start_time = time.time()
-
-        pr = cProfile.Profile()
-        pr.enable()
-
-        cpu_before = get_cpu_usage()
-
-        result = func(*args, **kwargs)
-
-        pr.disable()
-        end_time = time.time()
-
-        cpu_after = get_cpu_usage()
-
-        current, peak = tracemalloc.get_traced_memory()
-        tracemalloc.stop()
-
-        performance_data = {
-            "Function": func.__name__,
-            "Time Taken (seconds)": f"{end_time - start_time:.6f}",
-            "Current Memory (MB)": f"{current / 10**6:.6f}",
-            "Peak Memory (MB)": f"{peak / 10**6:.6f}",
-            "CPU Usage Before (%)": cpu_before,
-            "CPU Usage After (%)": cpu_after
-        }
-        performance_results.append(performance_data)
-
-        # Collect profiling data
-        prof_data = StringIO()
-        stats = pstats.Stats(pr, stream=prof_data)
-        stats.strip_dirs().sort_stats('time').print_stats()
-        profiling_data = {
-            "Function": func.__name__,
-            "Profiling Data": prof_data.getvalue()
-        }
-        profiling_results.append(profiling_data)
-
-        return result
-
-    # Check if function is async or not
-    if asyncio.iscoroutinefunction(func):
-        return async_wrapper
-    else:
-        return sync_wrapper
-
-def print_performance_results():
-    print("Performance Results:")
-    print(tabulate(performance_results, headers="keys", tablefmt="grid"))
-
-def print_profiling_results():
-    print("\nProfiling Results:")
-    for result in profiling_results:
-        print(f"\nFunction: {result['Function']}")
-        print(result['Profiling Data'])
-
-def save_results():
-    # Open the file in write mode
-    with open('Benchmark/performance_results.txt', 'w') as f:
-        # Write Performance Results Table
-        f.write("=== Performance Results ===\n")
-        
-        # Format the performance results into a table
-        table = tabulate(performance_results, headers="keys", tablefmt="grid")
-        
-        # Write the table to the file
-        f.write(table)
-        f.write("\n\n")
-
-        # Write Profiling Results
-        f.write("\n=== Profiling Results ===\n")
-        for result in profiling_results:
-            f.write(f"Function: {result['Function']}\n")
-            f.write(f"Profiling Data:\n")
-            f.write(result['Profiling Data'])
-            f.write("\n\n")
-
-
-def show_results():
-    pass
-
-def check_memory_leaks():
-    # Detect memory leaks using the gc module
-    gc.collect()
-    print(f"Unreachable objects: {gc.garbage}")
+        return wrapper
+    return decorator

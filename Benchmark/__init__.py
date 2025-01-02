@@ -1,2 +1,2 @@
 from Benchmark.logger import get_logger
-from Benchmark.benchmark import performance_decorator, print_performance_results, print_profiling_results, save_results, show_results
+from Benchmark.benchmark import profile_function

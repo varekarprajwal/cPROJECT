@@ -1,29 +1,21 @@
-import time
-from Benchmark import performance_decorator, print_performance_results, print_profiling_results, save_results, show_results
-from Benchmark import get_logger
+# main.py
+from Benchmark import profile_function
+import sys
 
-# Get logger
-logger = get_logger()
+# Function 1 to profile
+@profile_function(str(sys.argv[1]))
+def function_one():
+    x = 0
+    for i in range(5000):
+        x += i
+    return x
 
-@performance_decorator
-def say_hello():
-    logger.info("say_hello function called")
-    print("Hello!")
+def main():
+    # Run functions using cProfile profiling
+    function_one()
 
-@performance_decorator
-def add_numbers(a, b):
-    logger.info(f"add_numbers called with a={a}, b={b}")
-    result = a + b
-    print(f"The sum of {a} and {b} is {result}")
-    return result
+    
+    
+if __name__ == '__main__':
+    main()
 
-if __name__ == "__main__":
-    # Run functions
-    say_hello()
-    add_numbers(10,12)
-
-    # Save results to a file
-    save_results()
-
-    # Show results in GUI (Streamlit)
-    show_results()

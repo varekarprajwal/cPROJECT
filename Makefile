@@ -19,7 +19,16 @@ install: $(VENV_DIR)
 
 # Run the Python program with detailed time and memory stats
 run: $(VENV_DIR)
-	/usr/bin/time -v $(VENV_DIR)/bin/python $(SCRIPT) 2> $(EXECUTION)
+	/usr/bin/time -v $(VENV_DIR)/bin/python $(SCRIPT) none 2> $(EXECUTION)
+
+run_cProfile: $(VENV_DIR)
+	/usr/bin/time -v $(VENV_DIR)/bin/python $(SCRIPT) cProfile 2> $(EXECUTION)
+
+run_line_profiler: $(VENV_DIR)
+	/usr/bin/time -v $(VENV_DIR)/bin/python $(SCRIPT) line_profiler 2> $(EXECUTION)
+
+run_memory_profiler: $(VENV_DIR)
+	/usr/bin/time -v $(VENV_DIR)/bin/python $(SCRIPT) memory_profiler 2> $(EXECUTION)
 
 # Setup the virtual environment and install dependencies
 setup: $(VENV_DIR)
@@ -31,7 +40,7 @@ clean:
 
 # Clear the log file
 clear_logs:
-	rm -f $(BENCHMARK_DIR)/logs/app.log
+	rm -f $(BENCHMARK_DIR)/logs/program.log
 
 # To create a requirements file (e.g., if you want to track your Python dependencies)
 freeze:
@@ -41,8 +50,11 @@ freeze:
 help:
 	@echo "Makefile for managing the Python project"
 	@echo "Usage:"
-	@echo "  make setup   - Set up the virtual environment and install dependencies"
-	@echo "  make run     - Run the Python script with time and memory statistics"
-	@echo "  make clean   - Remove the virtual environment"
-	@echo "  make freeze  - Generate a requirements.txt from the virtual environment"
-	@echo "  make clear_logs - Clear the log file (project_log.log)"
+	@echo "  make setup  	 		- Set up the virtual environment and install dependencies"
+	@echo "  make run    			- Run the Python script without Profile"
+	@echo "  make run_cProfile   		- Run the Python script with cProfile"
+	@echo "  make run_line_profiler        - Run the Python script with line_profiler"
+	@echo "  make run_memory_profiler      - Run the Python script with memory_profiler"
+	@echo "  make clean   			- Remove the virtual environment"
+	@echo "  make freeze 			- Generate a requirements.txt from the virtual environment"
+	@echo "  make clear_ogs 		- Clear the log file (project_log.log)"
